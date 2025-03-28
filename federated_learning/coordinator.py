@@ -1,59 +1,190 @@
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from sklearn.metrics import roc_auc_score, roc_curve, precision_recall_curve, auc, f1_score
+
 class FederatedLearning:
     """
     Coordonnateur de l'apprentissage fédéré
-    """
     
+    Si le modèle utilisé est une régression logistique (type statsmodels),
+    un seul cycle d'entraînement suffit. Pour les modèles de type réseau de neurones,
+    l'entraînement peut être réalisé sur plusieurs itérations via l'argument num_rounds.
+    """
+
     def __init__(self, data_dict, features, target, model_class, server=None, **model_params):
-        """
-        Initialise le système d'apprentissage fédéré
-        
-        Args:
-            data_dict: Dictionnaire {nom_client: dataframe}
-            features: Liste des caractéristiques
-            target: Nom de la variable cible
-            model_class: Classe du modèle à utiliser
-            server: Instance de FederatedServer ou None
-            **model_params: Paramètres à passer au constructeur du modèle
-        """
         from .server import FederatedServer
-        
+
         self.data_dict = data_dict
         self.features = features
         self.target = target
         self.model_class = model_class
         self.model_params = model_params
         self.server = server if server else FederatedServer()
-    
+        self.history_weights = []
+        self.history_metrics = []
+
     def setup(self):
-        """
-        Configure le système en créant les clients
-        """
         from .client import FederatedClient
-        
+
         for client_name, data in self.data_dict.items():
             try:
                 print(f"Configuration du client '{client_name}' avec {len(data)} observations")
-                
-                # Créer une nouvelle instance du modèle pour chaque client
+
                 model = self.model_class(**self.model_params)
-                
-                # Créer le client
+
                 client = FederatedClient(
-                    name=client_name, 
-                    data=data, 
-                    features=self.features, 
+                    name=client_name,
+                    data=data,
+                    features=self.features,
                     target=self.target,
                     model=model
                 )
-                
+
                 self.server.add_client(client)
                 print(f"Client '{client_name}' ajouté avec succès")
-                
+
             except Exception as e:
                 print(f"Erreur lors de la configuration du client '{client_name}': {str(e)}")
-    
-    def train(self, num_rounds=5):
-        """
-        Lance l'entraînement fédéré
-        """
-        return self.server.train_global_model(num_rounds)
+
+    def train(self, num_rounds=1):
+        print(f"\nDémarrage de l'entraînement fédéré ({num_rounds} cycle(s))...")
+        for _ in range(num_rounds):
+            global_weights = self.server.train_global_model(1)
+            self.history_weights.append(global_weights.copy())
+
+            round_metrics = {}
+            for client in self.server.clients:
+                metrics = client.evaluate_model()
+                round_metrics[client.name] = metrics
+            self.history_metrics.append(round_metrics)
+
+        return self.history_weights[-1]
+
+    def plot_weights_evolution(self):
+        if not self.history_weights:
+            print("Aucun poids enregistré. Lancez d'abord l'entraînement.")
+            return
+
+        weight_matrix = np.vstack(self.history_weights)
+        feature_names = ['Intercept'] + self.features
+
+        plt.figure(figsize=(10, 6))
+        for i, name in enumerate(feature_names):
+            plt.plot(weight_matrix[:, i], label=name)
+
+        plt.title("Évolution des poids globaux par cycle")
+        plt.xlabel("Cycle fédéré")
+        plt.ylabel("Poids")
+        plt.legend()
+        plt.grid(True)
+        plt.tight_layout()
+        plt.show()
+
+    def plot_client_metrics(self, metric_name='f1'):
+        if not self.history_metrics:
+            print("Aucune métrique enregistrée. Lancez d'abord l'entraînement.")
+            return
+
+        client_names = list(self.history_metrics[0].keys())
+        rounds = list(range(1, len(self.history_metrics) + 1))
+
+        plt.figure(figsize=(10, 6))
+        for client in client_names:
+            values = [round_metrics[client].get(metric_name, 0.0) for round_metrics in self.history_metrics]
+            plt.plot(rounds, values, label=client)
+
+        plt.title(f"Évolution de la métrique '{metric_name}' par client")
+        plt.xlabel("Cycle fédéré")
+        plt.ylabel(metric_name.capitalize())
+        plt.legend()
+        plt.grid(True)
+        plt.tight_layout()
+        plt.show()
+
+    def summarize_class_balance(self):
+        print("\nDistribution des classes cibles par client :")
+        for name, df in self.data_dict.items():
+            if self.target in df.columns:
+                counts = df[self.target].value_counts().sort_index()
+                print(f"\n{name} :")
+                for cls, count in counts.items():
+                    print(f"  Classe {cls} : {count} exemples")
+
+    def plot_proba_distribution(self):
+        print("\nDistribution des probabilités prédites par client :")
+        for client in self.server.clients:
+            try:
+                proba = client.model.predict_proba(client.X_test)
+                if proba.ndim == 2:
+                    proba = proba[:, 1]
+                plt.figure(figsize=(8, 4))
+                plt.hist(proba, bins=50, alpha=0.7, edgecolor='k')
+                plt.title(f"Distribution des probabilités - {client.name}")
+                plt.xlabel("Probabilité prédite")
+                plt.ylabel("Nombre d'observations")
+                plt.grid(True)
+                plt.tight_layout()
+                plt.show()
+            except Exception as e:
+                print(f"[Erreur] Client {client.name} : {str(e)}")
+
+    def plot_roc_curves(self):
+        print("\nCourbes ROC par client :")
+        for client in self.server.clients:
+            try:
+                y_true = client.y_test
+                y_score = client.model.predict_proba(client.X_test)
+                if y_score.ndim == 2:
+                    y_score = y_score[:, 1]
+                fpr, tpr, _ = roc_curve(y_true, y_score)
+                auc_score = roc_auc_score(y_true, y_score)
+                plt.plot(fpr, tpr, label=f"{client.name} (AUC = {auc_score:.3f})")
+            except Exception as e:
+                print(f"[Erreur ROC] {client.name}: {str(e)}")
+        plt.plot([0, 1], [0, 1], 'k--')
+        plt.xlabel("Taux de faux positifs")
+        plt.ylabel("Taux de vrais positifs")
+        plt.title("Courbes ROC des clients")
+        plt.legend()
+        plt.grid(True)
+        plt.tight_layout()
+        plt.show()
+
+    def plot_precision_recall_curves(self):
+        print("\nCourbes Precision-Recall par client :")
+        for client in self.server.clients:
+            try:
+                y_true = client.y_test
+                y_score = client.model.predict_proba(client.X_test)
+                if y_score.ndim == 2:
+                    y_score = y_score[:, 1]
+                precision, recall, _ = precision_recall_curve(y_true, y_score)
+                pr_auc = auc(recall, precision)
+                plt.plot(recall, precision, label=f"{client.name} (AUC = {pr_auc:.3f})")
+            except Exception as e:
+                print(f"[Erreur PR] {client.name}: {str(e)}")
+        plt.xlabel("Recall")
+        plt.ylabel("Precision")
+        plt.title("Courbes Precision-Recall des clients")
+        plt.legend()
+        plt.grid(True)
+        plt.tight_layout()
+        plt.show()
+
+    def find_best_thresholds(self):
+        print("\nSeuils optimaux par client (max F1-score) :")
+        for client in self.server.clients:
+            try:
+                y_true = client.y_test
+                y_score = client.model.predict_proba(client.X_test)
+                if y_score.ndim == 2:
+                    y_score = y_score[:, 1]
+                thresholds = np.linspace(0.01, 0.5, 100)
+                f1_scores = [f1_score(y_true, y_score >= t, zero_division=0) for t in thresholds]
+                best_idx = int(np.argmax(f1_scores))
+                best_threshold = thresholds[best_idx]
+                best_f1 = f1_scores[best_idx]
+                print(f"  {client.name}: seuil optimal = {best_threshold:.3f}, F1 = {best_f1:.3f}")
+            except Exception as e:
+                print(f"[Erreur seuil] {client.name}: {str(e)}")

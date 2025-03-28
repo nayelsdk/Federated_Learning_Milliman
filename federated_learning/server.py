@@ -34,37 +34,38 @@ class FederatedServer:
         Entraîne le modèle global sur plusieurs cycles
         """
         print(f"\nDémarrage de l'apprentissage fédéré avec {len(self.clients)} clients")
-        
-        # Initialisation des poids si nécessaire
+
         if self.global_weights is None and self.clients:
-            # Entraîner le premier client pour obtenir la structure des poids
             self.global_weights = self.clients[0].train_local_model()
-        
+
         for round_num in range(num_rounds):
             print(f"\n--- Cycle d'apprentissage fédéré {round_num + 1}/{num_rounds} ---")
-            
-            # Mettre à jour les clients avec les poids globaux actuels
+
             if round_num > 0:
                 for client in self.clients:
-                    client.update_weights(self.global_weights)
-            
-            # Collecter les poids et tailles d'échantillon
+                    try:
+                        client.update_weights(self.global_weights)
+                    except NotImplementedError:
+                        print(f"[Info] Le modèle du client '{client.name}' ne supporte pas la mise à jour des poids.")
+
             local_weights = []
             sample_sizes = []
-            
+
             for client in self.clients:
                 weights = client.train_local_model()
                 local_weights.append(weights)
                 sample_sizes.append(len(client.X_train))
-            
-            # Agréger les poids
-            self.global_weights = self.federated_averaging(local_weights, sample_sizes)
-            
-            # Afficher les poids globaux
+
+            try:
+                self.global_weights = self.federated_averaging(local_weights, sample_sizes)
+            except Exception as e:
+                print(f"[Warning] Échec de l'agrégation fédérée: {str(e)}")
+                break
+
             if self.clients:
                 feature_names = ['Intercept'] + self.clients[0].features
                 print(f"\nPoids globaux après le cycle {round_num + 1}:")
                 for name, weight in zip(feature_names, self.global_weights):
                     print(f"  {name}: {weight:.6f}")
-        
+
         return self.global_weights
