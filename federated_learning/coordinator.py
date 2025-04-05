@@ -1,50 +1,60 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn.metrics import roc_auc_score, roc_curve, precision_recall_curve, auc, f1_score
+from sklearn.metrics import roc_auc_score, roc_curve, precision_recall_curve, auc
+from .client import FederatedClient
 
 class FederatedLearning:
     """
-    Coordonnateur de l'apprentissage fédéré
-    
-    Si le modèle utilisé est une régression logistique (type statsmodels),
-    un seul cycle d'entraînement suffit. Pour les modèles de type réseau de neurones,
-    l'entraînement peut être réalisé sur plusieurs itérations via l'argument num_rounds.
+    Coordonnateur de l'apprentissage fédéré.
+    Fournit les méthodes de configuration des clients, d'entraînement global
+    et de visualisation des résultats, y compris les courbes ROC/PR, la distribution
+    des probabilités, les poids et les coefficients.
     """
 
     def __init__(self, data_dict, features, target, model_class, server=None, **model_params):
         from .server import FederatedServer
-
         self.data_dict = data_dict
         self.features = features
         self.target = target
         self.model_class = model_class
         self.model_params = model_params
+        print(f"[DEBUG FederatedLearning.__init__] Paramètres reçus: {model_params}")
         self.server = server if server else FederatedServer()
         self.history_weights = []
         self.history_metrics = []
 
-    def setup(self):
-        from .client import FederatedClient
-        from imblearn.over_sampling import SMOTE
-
+    def setup(self, class_weights=None):
         for client_name, data in self.data_dict.items():
             try:
                 print(f"Configuration du client '{client_name}' avec {len(data)} observations")
+                # Nettoyage des données
+                print(f"Nettoyage des données pour {client_name} (NaN ou inf)...")
+                X = data[self.features].replace([np.inf, -np.inf], np.nan)
+                combined = pd.concat([X, data[[self.target, "Exposure"]]], axis=1)
+                cleaned = combined.dropna()
+                cleaned_data = cleaned.copy()
+                cleaned_data[self.features] = cleaned_data[self.features].astype(float)
+                print(f" => {len(cleaned_data)} lignes restantes après nettoyage")
 
-                model = self.model_class(**self.model_params)
-
+                # Définir les poids des classes si demandé
+                # Création du modèle avec les bons paramètres
+                print(f"[DEBUG setup] Création du modèle avec paramètres: {self.model_params}")
+                if isinstance(class_weights, dict):
+                    model = self.model_class(class_weight=class_weights, **self.model_params)
+                else:
+                    model = self.model_class(**self.model_params)
+                
                 client = FederatedClient(
                     name=client_name,
-                    data=data,
+                    data=cleaned_data,
                     features=self.features,
                     target=self.target,
-                    model=model
+                    model=model,
+                    cost_matrix={ (0, 1): 1.0, (1, 0): 5.0 } 
                 )
-
                 self.server.add_client(client)
                 print(f"Client '{client_name}' ajouté avec succès")
-
             except Exception as e:
                 print(f"Erreur lors de la configuration du client '{client_name}': {str(e)}")
 
@@ -54,42 +64,14 @@ class FederatedLearning:
         for _ in range(num_rounds):
             global_weights = self.server.train_global_model(1)
             self.history_weights.append(global_weights.copy())
-
-            round_metrics = {}
-            for client in self.server.clients:
-                metrics = client.evaluate_model()
-                round_metrics[client.name] = metrics
-            self.history_metrics.append(round_metrics)
-
         return self.history_weights[-1]
 
     def visualize_diagnostics(self):
         self.plot_weights_evolution()
-        self.plot_client_metrics('f1')
-        self.summarize_class_balance()
         self.plot_proba_distribution()
-        self.plot_roc_curves()
-        self.plot_precision_recall_curves()
-        self.display_statistical_tests()
-
-    def display_statistical_tests(self):
-        print("\nTest statistique des coefficients du premier client :")
-        try:
-            first_model = self.server.clients[0].model
-            feature_names = ['Intercept'] + self.features
-
-            if hasattr(first_model, 'results'):
-                res = first_model.results
-                for i, name in enumerate(feature_names):
-                    coef = res.params[i]
-                    pval = res.pvalues[i]
-                    stderr = res.bse[i]
-                    ci = res.conf_int().iloc[i]
-                    print(f"{name:15}: coef = {coef:.4f}, p = {pval:.4g}, SE = {stderr:.4f}, 95% CI = [{ci[0]:.4f}, {ci[1]:.4f}]")
-            else:
-                print("  Résultats statsmodels non disponibles pour ce modèle.")
-        except Exception as e:
-            print(f"[Erreur test stat] : {e}")
+        self.plot_model_coefficients()
+        self.compare_local_vs_global_roc()
+        self.compare_local_vs_global_pr()
 
     def plot_weights_evolution(self):
         if not self.history_weights:
@@ -111,36 +93,6 @@ class FederatedLearning:
         plt.tight_layout()
         plt.show()
 
-    def plot_client_metrics(self, metric_name='f1'):
-        if not self.history_metrics:
-            print("Aucune métrique enregistrée. Lancez d'abord l'entraînement.")
-            return
-
-        client_names = list(self.history_metrics[0].keys())
-        rounds = list(range(1, len(self.history_metrics) + 1))
-
-        plt.figure(figsize=(10, 6))
-        for client in client_names:
-            values = [round_metrics[client].get(metric_name, 0.0) for round_metrics in self.history_metrics]
-            plt.plot(rounds, values, label=client)
-
-        plt.title(f"Évolution de la métrique '{metric_name}' par client")
-        plt.xlabel("Cycle fédéré")
-        plt.ylabel(metric_name.capitalize())
-        plt.legend()
-        plt.grid(True)
-        plt.tight_layout()
-        plt.show()
-
-    def summarize_class_balance(self):
-        print("\nDistribution des classes cibles par client :")
-        for name, df in self.data_dict.items():
-            if self.target in df.columns:
-                counts = df[self.target].value_counts().sort_index()
-                print(f"\n{name} :")
-                for cls, count in counts.items():
-                    print(f"  Classe {cls} : {count} exemples")
-
     def plot_proba_distribution(self):
         print("\nDistribution des probabilités prédites par client :")
         for client in self.server.clients:
@@ -159,70 +111,6 @@ class FederatedLearning:
             except Exception as e:
                 print(f"[Erreur] Client {client.name} : {str(e)}")
 
-    def plot_roc_curves(self):
-        print("\nCourbes ROC par client :")
-        for client in self.server.clients:
-            try:
-                y_true = client.y_test
-                y_score = client.model.predict_proba(client.X_test)
-                if y_score.ndim == 2:
-                    y_score = y_score[:, 1]
-                fpr, tpr, _ = roc_curve(y_true, y_score)
-                auc_score = roc_auc_score(y_true, y_score)
-                plt.plot(fpr, tpr, label=f"{client.name} (AUC = {auc_score:.3f})")
-            except Exception as e:
-                print(f"[Erreur ROC] {client.name}: {str(e)}")
-        plt.plot([0, 1], [0, 1], 'k--')
-        plt.xlabel("Taux de faux positifs")
-        plt.ylabel("Taux de vrais positifs")
-        plt.title("Courbes ROC des clients")
-        plt.legend()
-        plt.grid(True)
-        plt.tight_layout()
-        plt.show()
-
-    def plot_precision_recall_curves(self):
-        print("\nCourbes Precision-Recall par client :")
-        for client in self.server.clients:
-            try:
-                y_true = client.y_test
-                y_score = client.model.predict_proba(client.X_test)
-                if y_score.ndim == 2:
-                    y_score = y_score[:, 1]
-                precision, recall, _ = precision_recall_curve(y_true, y_score)
-                pr_auc = auc(recall, precision)
-                plt.plot(recall, precision, label=f"{client.name} (AUC = {pr_auc:.3f})")
-            except Exception as e:
-                print(f"[Erreur PR] {client.name}: {str(e)}")
-        plt.xlabel("Recall")
-        plt.ylabel("Precision")
-        plt.title("Courbes Precision-Recall des clients")
-        plt.legend()
-        plt.grid(True)
-        plt.tight_layout()
-        plt.show()
-
-    def find_best_thresholds(self, metric='f1'):
-        print("\nSeuils optimaux par client selon la métrique :", metric)
-        for client in self.server.clients:
-            try:
-                y_true = client.y_test
-                y_score = client.model.predict_proba(client.X_test)
-                if y_score.ndim == 2:
-                    y_score = y_score[:, 1]
-                thresholds = np.linspace(0.01, 0.5, 100)
-                best_score = -1
-                best_threshold = 0.0
-                for t in thresholds:
-                    y_pred = (y_score >= t).astype(int)
-                    score = f1_score(y_true, y_pred, zero_division=0) if metric == 'f1' else 0
-                    if score > best_score:
-                        best_score = score
-                        best_threshold = t
-                print(f"  {client.name} : meilleur seuil = {best_threshold:.3f}, {metric} = {best_score:.4f}")
-            except Exception as e:
-                print(f"[Erreur seuil] {client.name}: {str(e)}")
-    
     def plot_model_coefficients(self):
         try:
             first_model = self.server.clients[0].model
@@ -234,20 +122,26 @@ class FederatedLearning:
 
             res = first_model.results
             coef = res.params.values
-            pvals = res.pvalues.values
-
             sorted_idx = np.argsort(np.abs(coef))[::-1]
             coef_sorted = coef[sorted_idx]
-            pval_sorted = pvals[sorted_idx]
             features_sorted = [feature_names[i] for i in sorted_idx]
 
-            colors = []
-            for p, c in zip(pval_sorted, coef_sorted):
-                if p < 0.05:
-                    colors.append('#2ecc71' if c >= 0 else '#e74c3c')  # vert ou rouge si significatif
-                else:
-                    colors.append('lightgray')  # pas significatif
+            # Vérifie la présence des p-values
+            has_pvalues = hasattr(res, 'pvalues') and res.pvalues is not None
 
+            if has_pvalues:
+                pval_sorted = res.pvalues.values[sorted_idx]
+                colors = [
+                    '#2ecc71' if p < 0.05 and c >= 0 else
+                    '#e74c3c' if p < 0.05 and c < 0 else
+                    'lightgray'
+                    for p, c in zip(pval_sorted, coef_sorted)
+                ]
+            else:
+                print("[Info] Pas de p-values disponibles : affichage simple des coefficients.")
+                colors = ['#3498db' if c >= 0 else '#e67e22' for c in coef_sorted]  # bleu / orange
+
+            # Affichage
             plt.figure(figsize=(10, 6))
             bars = plt.barh(range(len(coef_sorted)), coef_sorted, color=colors, edgecolor='black')
             for i, v in enumerate(coef_sorted):
@@ -255,11 +149,152 @@ class FederatedLearning:
 
             plt.yticks(range(len(features_sorted)), features_sorted)
             plt.axvline(x=0, color='gray', linestyle='--', alpha=0.7)
-            plt.title("Visualisation des coefficients du modèle et leur significativité")
+            plt.title("Visualisation des coefficients du modèle")
             plt.xlabel("Valeur du coefficient")
             plt.grid(axis='x', linestyle='--', alpha=0.3)
             plt.tight_layout()
             plt.show()
+            
         except Exception as e:
             print(f"[Erreur plot coeffs] : {e}")
 
+    def compare_local_vs_global_roc(self):
+        print("\nComparaison des courbes ROC : modèle local vs modèle global")
+        global_weights = self.history_weights[-1] if self.history_weights else None
+        
+        for client in self.server.clients:
+            try:
+                y_true = client.y_test
+                y_local_score = client.model.predict_proba(client.X_test)
+                if y_local_score.ndim == 2:
+                    y_local_score = y_local_score[:, 1]
+                auc_local = roc_auc_score(y_true, y_local_score)
+                
+                # Utilisez les mêmes paramètres pour le modèle global
+                model_global = self.model_class(**self.model_params)
+                model_global.train(client.X_train, client.y_train, sample_weight=client.exposure_train)
+                model_global.set_weights(global_weights)
+                
+                y_global_score = model_global.predict_proba(client.X_test)
+                if y_global_score.ndim == 2:
+                    y_global_score = y_global_score[:, 1]
+                auc_global = roc_auc_score(y_true, y_global_score)
+                
+                # Création des courbes ROC
+                fpr_local, tpr_local, _ = roc_curve(y_true, y_local_score)
+                fpr_global, tpr_global, _ = roc_curve(y_true, y_global_score)
+                
+                plt.figure(figsize=(8, 6))
+                plt.plot(fpr_local, tpr_local, label=f"Local (AUC = {auc_local:.3f})")
+                plt.plot(fpr_global, tpr_global, label=f"Global (AUC = {auc_global:.3f})")
+                plt.plot([0, 1], [0, 1], 'k--')
+                plt.xlabel('Taux de faux positifs')
+                plt.ylabel('Taux de vrais positifs')
+                plt.title(f'Courbe ROC - {client.name}')
+                plt.legend(loc="lower right")
+                plt.show()
+            except Exception as e:
+                print(f"[Erreur] Client {client.name} : {str(e)}")
+
+
+    def compare_local_vs_global_pr(self):
+        print("\nComparaison des courbes Precision-Recall : modèle local vs modèle global")
+        global_weights = self.history_weights[-1] if self.history_weights else None
+
+        for client in self.server.clients:
+            try:
+                y_true = client.y_test
+                y_local_score = client.model.predict_proba(client.X_test)
+                if y_local_score.ndim == 2:
+                    y_local_score = y_local_score[:, 1]
+                precision_local, recall_local, _ = precision_recall_curve(y_true, y_local_score)
+                auc_local = auc(recall_local, precision_local)
+
+                model_global = self.model_class(**self.model_params)
+                model_global.train(client.X_train, client.y_train, sample_weight=client.exposure_train)
+                model_global.set_weights(global_weights)
+                y_global_score = model_global.predict_proba(client.X_test)
+                if y_global_score.ndim == 2:
+                    y_global_score = y_global_score[:, 1]
+                precision_global, recall_global, _ = precision_recall_curve(y_true, y_global_score)
+                auc_global = auc(recall_global, precision_global)
+
+                plt.figure(figsize=(8, 6))
+                plt.plot(recall_local, precision_local, label=f"Local (AUC = {auc_local:.3f})")
+                plt.plot(recall_global, precision_global, label=f"Global (AUC = {auc_global:.3f})")
+                plt.title(f"Courbe Precision-Recall - {client.name}")
+                plt.xlabel("Recall")
+                plt.ylabel("Precision")
+                plt.legend()
+                plt.grid(True, linestyle='--', alpha=0.3)
+                plt.tight_layout()
+                plt.show()
+
+            except Exception as e:
+                print(f"[Erreur comparaison PR] {client.name} : {e}")
+    
+    def compare_cross_client_performance(self):
+        """
+        Compare les performances des modèles locaux sur toutes les bases + du modèle global sur chaque base.
+        """
+        print("\nComparaison croisée des performances entre clients (modèles locaux vs modèle global)...")
+
+        clients = self.server.clients
+        n = len(clients)
+        client_names = [c.name for c in clients]
+        global_weights = self.history_weights[-1] if self.history_weights else None
+
+        records = []
+
+        for source_client in clients:
+            source_name = source_client.name
+            local_weights = source_client.model.get_weights()
+
+            for target_client in clients:
+                target_name = target_client.name
+
+                # Tester les poids locaux du client source
+                model_local = self.model_class(**self.model_params)
+                model_local.train(target_client.X_train, target_client.y_train, sample_weight=target_client.exposure_train)
+                model_local.set_weights(local_weights)
+                y_true = target_client.y_test
+                y_score = model_local.predict_proba(target_client.X_test)
+                if y_score.ndim == 2:
+                    y_score = y_score[:, 1]
+                auc_local = roc_auc_score(y_true, y_score)
+                records.append((f"Local_{source_name}", target_name, auc_local))
+
+        # Ajouter le modèle global (même poids pour tous)
+        for target_client in clients:
+            model_global = self.model_class(**self.model_params)
+            model_global.train(target_client.X_train, target_client.y_train, sample_weight=target_client.exposure_train)
+            model_global.set_weights(global_weights)
+            y_true = target_client.y_test
+            y_score = model_global.predict_proba(target_client.X_test)
+            if y_score.ndim == 2:
+                y_score = y_score[:, 1]
+            auc_global = roc_auc_score(y_true, y_score)
+            records.append(("Federated", target_client.name, auc_global))
+
+        # Construction DataFrame
+        df = pd.DataFrame(records, columns=["Source", "Cible", "AUC"])
+        pivot = df.pivot(index="Source", columns="Cible", values="AUC")
+
+        print("\nMatrice AUC croisés (modèles locaux + global) :\n")
+        print(pivot.round(4))
+
+        # Affichage heatmap avec valeur dans chaque case
+        plt.figure(figsize=(10, 6))
+        plt.title("Performance croisée des modèles (Local & Federated) - AUC")
+        im = plt.imshow(pivot.values, cmap="coolwarm", vmin=0.5, vmax=1)
+        plt.xticks(range(len(pivot.columns)), pivot.columns, rotation=45)
+        plt.yticks(range(len(pivot.index)), pivot.index)
+        plt.colorbar(im, label="AUC")
+
+        for i in range(len(pivot.index)):
+            for j in range(len(pivot.columns)):
+                val = pivot.values[i, j]
+                plt.text(j, i, f"{val:.2f}", ha='center', va='center', color='black')
+
+        plt.tight_layout()
+        plt.show()
