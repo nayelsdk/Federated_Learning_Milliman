@@ -37,11 +37,14 @@ class FederatedLearning:
                 cleaned_data[self.features] = cleaned_data[self.features].astype(float)
                 print(f" => {len(cleaned_data)} lignes restantes après nettoyage")
 
-                # Définir les poids des classes si demandé
                 # Création du modèle avec les bons paramètres
                 print(f"[DEBUG setup] Création du modèle avec paramètres: {self.model_params}")
-                if isinstance(class_weights, dict):
-                    model = self.model_class(class_weight=class_weights, **self.model_params)
+                
+                # IMPORTANT: S'assurer qu'alpha est correctement transmis
+                if 'alpha' in self.model_params:
+                    alpha = self.model_params['alpha']
+                    print(f"[DEBUG setup] Alpha spécifié: {alpha}")
+                    model = self.model_class(alpha=alpha)
                 else:
                     model = self.model_class(**self.model_params)
                 
@@ -51,7 +54,7 @@ class FederatedLearning:
                     features=self.features,
                     target=self.target,
                     model=model,
-                    cost_matrix={ (0, 1): 1.0, (1, 0): 5.0 } 
+                    cost_matrix={(0, 1): 1.0, (1, 0): 5.0} 
                 )
                 self.server.add_client(client)
                 print(f"Client '{client_name}' ajouté avec succès")
