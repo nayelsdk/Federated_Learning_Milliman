@@ -65,6 +65,7 @@ class FederatedClient:
         if hasattr(self.model, 'alpha'):
             print(f"[DEBUG train_local_model] Client {self.name} utilise alpha={self.model.alpha}")
         
+        # Entraînement du modèle avec les poids déjà mis à jour
         self.model.train(self.X_train, self.y_train, sample_weight=combined_weights)
         
         weights = self.model.get_weights()
@@ -112,3 +113,16 @@ class FederatedClient:
         except Exception as e:
             print(f"[Erreur] évaluation impossible pour {self.name}: {e}")
             return {}
+
+    def update_weights(self, weights):
+        """
+        Met à jour les poids du modèle local avec les poids globaux
+        """
+        try:
+            self.model.set_weights(weights)
+            print(f"[DEBUG] Poids mis à jour pour le client {self.name}")
+            # Affichage des paramètres de régularisation actuels
+            if hasattr(self.model, 'alpha'):
+                print(f"[DEBUG] Alpha actuel pour {self.name} = {self.model.alpha}")
+        except Exception as e:
+            print(f"[Erreur] Impossible de mettre à jour les poids pour {self.name}: {e}")

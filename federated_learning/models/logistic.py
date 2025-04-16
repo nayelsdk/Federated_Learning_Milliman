@@ -7,14 +7,33 @@ class LogisticModel(BaseModel):
     Implémentation d'un modèle de régression logistique pour l'apprentissage fédéré
     """
     
-    def __init__(self, max_iter=1000, random_state=42, class_weight='balanced'):
+    def __init__(self, max_iter=1000, random_state=42, class_weight='balanced', 
+                 penalty='l2', C=1.0, solver='lbfgs'):
+        self.penalty = penalty
+        self.C = C
+        self.solver = solver
         self.model = LogisticRegression(
             max_iter=max_iter,
             random_state=random_state,
             class_weight=class_weight,
-            warm_start=True
+            warm_start=True,
+            penalty=penalty,
+            C=C,
+            solver=solver
         )
         self.fitted = False
+    
+    def update_regularization(self, C=None, penalty=None):
+        """
+        Met à jour les paramètres de régularisation
+        """
+        if C is not None:
+            self.C = C
+            self.model.C = C
+        if penalty is not None:
+            self.penalty = penalty
+            self.model.penalty = penalty
+        return self
     
     def train(self, X, y, sample_weight=None):
         """
