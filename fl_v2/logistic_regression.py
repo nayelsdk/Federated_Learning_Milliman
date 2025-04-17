@@ -3,24 +3,16 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegressionCV
+from sklearn.linear_model import LogisticRegression
+from sklearn.utils.class_weight import compute_class_weight
+from sklearn.linear_model import SGDClassifier
 from scipy.special import expit  
 from sklearn.metrics import roc_curve
+from federate_agregation import federated_averaging
 
 
-#df_be= pd.read_csv('data/belgium_data.csv')
-#df_eu= pd.read_csv('data/european_data.csv')
+np.array_split
 
-
-###BROUILLON###################################
-def split_data(df, test_size=0.25):
-    """
-    Splits the data into training and testing sets.
-    """
-    df=df.dropna()
-    X = df.drop('Sinistre', axis=1)
-    y = df['Sinistre']
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42)
-    return X_train, X_test, y_train, y_test
 
 def youden_index_threshold(y_true, y_proba):
     fpr, tpr, thresholds = roc_curve(y_true, y_proba)
@@ -30,63 +22,66 @@ def youden_index_threshold(y_true, y_proba):
     best_threshold = thresholds[best_index]
     return best_threshold, youden_index[best_index]
 
-
-def normalize_dataframe(X_train: pd.DataFrame, X_test: pd.DataFrame):
-    scaler = StandardScaler()
-
-    X_train_scaled = scaler.fit_transform(X_train)
-    X_test_scaled = scaler.transform(X_test)
-
-    X_train_scaled = pd.DataFrame(X_train_scaled, columns=X_train.columns, index=X_train.index)
-    X_test_scaled = pd.DataFrame(X_test_scaled, columns=X_test.columns, index=X_test.index)
-    return X_train_scaled, X_test_scaled
-
+def get_coefficients(model, X_train):
+    """
+    Get the coefficients of the model.
+    """
+    coefficients = dict(zip(X_train.columns, model.coef_[0]))
+    coefficients['Intercept'] = model.intercept_[0]
+    sorted_coefficients = dict(sorted(coefficients.items(), key=lambda item: abs(item[1]), reverse=True))
     
-def logistic_regression(X_train, y_train, X_test,y_test, Cs=np.logspace(-4,4,100)):
-    exposure_test, exposure_train= X_test['Exposure'], X_train['Exposure']
-    X_train,X_test= X_train.drop('Exposure', axis=1), X_test.drop('Exposure', axis=1)
-    logreg=LogisticRegressionCV(random_state=16,
-                              class_weight='balanced',# problème de classification non équilibrée
-                              penalty='l2',
-                              scoring='roc_auc', # on cherche à maximiser la fonction ROC car l'Accuracy n'est pas une bonne métrique ici
-                              cv=5,
-                              Cs=Cs,
-                              max_iter=1000) 
-    
-    
-    X_train, X_test= normalize_dataframe(X_train, X_test)
-    
-    logreg.fit(X_train, y_train,sample_weight=exposure_train) # car on veut qu 'Exposure soit pris en compte comme un coeff de durée de risque
-    
-    best_C=logreg.C_[0]
-    best_alpha = 1 / best_C
-    print(f"✅ Meilleur alpha : {best_alpha:.5f} (C = {best_C})")
-    
-    y_proba=logreg.predict_proba(X_test)[:,1]
-    y_proba=y_proba.tolist()
-    best_threshold, youden_index = youden_index_threshold(y_test, y_proba)
-    y_pred= (y_proba >= best_threshold).astype(int)
-    coefficients = dict(zip(X_train.columns, logreg.coef_[0]))
-    coefficients['Intercept'] = logreg.intercept_[0]
-    return y_proba, y_pred, coefficients
+    return sorted_coefficients
 
-
-
-###BROUILLON###################################
-
+def set_model_params(model, params):
+    """
+    Set the parameters of the model.
+    """
+    for key, value in params.items():
+        if hasattr(model, key):
+            setattr(model, key, value)
+        else:
+            raise ValueError(f"Parameter {key} not found in the model.")
+    return model
 
 
 class FederatedLogisticRegression:
-    def __init__(self, df):
+    """Ici, nous nous concentrons sur la regression logistique logistique dans un modèle fédéré. Je récupère les coefficients du modèle de RL pour les agréger et les réinjecter avec warm_start dans le modèle de RL.
+    Je fais cela pour chaque client, puis j'agrège selon différentes méthodes.
+    """
+    def __init__(self, df, local_epochs, federated_type="testSGD"):
         self.df = df.dropna()
         self.X_train, self.X_test, self.y_train, self.y_test = self.split_data()
         self.exposure_test, self.exposure_train = self.X_test['Exposure'], self.X_train['Exposure']
         self.X_train, self.X_test = self.X_train.drop('Exposure', axis=1), self.X_test.drop('Exposure', axis=1)
         self.model = None
         self.best_threshold = None
+        self.scaler = None  
+        self.local_epochs = local_epochs
+        self.federated_type = federated_type
+
+
+    
+    def choose_model(self):
+        if self.federated_type == "Averaging":
+            self.model=LogisticRegression(random_state=42,
+                            class_weight="balanced",# problème de classification non équilibrée
+                            penalty='l2',
+                            fit_intercept=True,
+                            scoring='roc_auc', # on cherche à maximiser la fonction ROC car l'Accuracy n'est pas une bonne métrique ici
+                            max_iter=self.local_epochs, #  warm start
+                            warm_start=True,
+                            C=4)
+        elif self.federated_type == "testSGD":
+            self.model=SGDClassifier(random_state=42,
+                            penalty='l2',
+                            fit_intercept=True,
+                            eta0=0.01,
+                            learning_rate='adaptive',
+                            max_iter=self.local_epochs, #  warm start
+                            warm_start=True,
+                            loss="log_loss")
         
-        
-    def split_data(self, test_size=0.25):
+    def split_data(self, test_size=0.30):
         """
         Splits the data into training and testing sets.
         """
@@ -96,33 +91,42 @@ class FederatedLogisticRegression:
         return X_train, X_test, y_train, y_test
 
     def normalize_dataframe(self, X_train: pd.DataFrame, X_test: pd.DataFrame):
-        scaler = StandardScaler()
-        X_train_scaled = scaler.fit_transform(X_train)
-        X_test_scaled = scaler.transform(X_test)
+        self.scaler = StandardScaler() 
+        X_train_scaled = self.scaler.fit_transform(X_train)
+        X_test_scaled = self.scaler.transform(X_test)
         X_train_scaled = pd.DataFrame(X_train_scaled, columns=X_train.columns, index=X_train.index)
         X_test_scaled = pd.DataFrame(X_test_scaled, columns=X_test.columns, index=X_test.index)
         return X_train_scaled, X_test_scaled
+
     
-    def logistic_regression(self, Cs=np.logspace(-4,4,100)):
-        logreg=LogisticRegressionCV(random_state=16,
-                                  class_weight={0:1,1:10},# problème de classification non équilibrée
-                                  penalty='l2',
-                                  scoring='roc_auc', # on cherche à maximiser la fonction ROC car l'Accuracy n'est pas une bonne métrique ici
-                                  cv=5,
-                                  Cs=Cs,
-                                  max_iter=1000)
+    def logistic_regression(self):
+        self.X_train, self.X_test = self.normalize_dataframe(self.X_train, self.X_test)
+        self.choose_model()
+        classes = np.unique(self.y_train)
+
         
         
-        self.X_train, self.X_test= self.normalize_dataframe(self.X_train, self.X_test)
-        logreg.fit(self.X_train, self.y_train,sample_weight=self.exposure_train)
-        best_C=logreg.C_[0]
-        best_alpha = 1 / best_C
-        y_proba=logreg.predict_proba(self.X_test)[:,1]
-        y_proba=y_proba.tolist()
-        self.best_threshold, youden_index = youden_index_threshold(self.y_test, y_proba)
-        y_pred= (y_proba >= self.best_threshold).astype(int)
-        coefficients = dict(zip(self.X_train.columns, logreg.coef_[0]))
-        coefficients['Intercept'] = logreg.intercept_[0]
+        
+        class_weights = compute_class_weight(class_weight='balanced', classes=classes, y=self.y_train)
+
+        class_weight_dict = dict(zip(classes, class_weights))
+
+
+
+        sample_weights = self.y_train.map(class_weight_dict)
+        print(classes)
+        
+        self.model.partial_fit(self.X_train, self.y_train, classes=classes, sample_weight=sample_weights)
+        
+
+        y_proba = self.model.predict_proba(self.X_test)[:, 1]
+        
+        y_proba = y_proba*self.exposure_train
+        y_proba_adjusted = y_proba.tolist()
+        self.best_threshold, youden_index = youden_index_threshold(self.y_test, y_proba_adjusted)
+        y_pred = (np.array(y_proba) >= self.best_threshold).astype(int)
+        coefficients = get_coefficients(self.model, self.X_train)
+
         return y_proba, y_pred, coefficients
 
 
@@ -136,28 +140,21 @@ class FederatedLogisticRegression:
         linear_pred = np.dot(X_aligned.values, list(coef_series)) + intercept
         y_scores = expit(linear_pred)
         y_pred = (y_scores >=best_threshold).astype(int)
-        print(y_pred)
         return y_scores, y_pred
 
 
-def setup_local_models(df):
-    lr=FederatedLogisticRegression(df['dataframe'])
-    X_test= lr.X_test
-    y_test= lr.y_test
-    y_proba, y_pred, coefs = lr.logistic_regression()
-    df['X_test']=X_test
-    df['y_test']=y_test
-    df['y_proba_local']=y_proba
-    df['y_pred_local']=y_pred
-    df['coefs']=coefs
-    df['best_threshold']=lr.best_threshold
-    return df
 
-def setup_model(df, coeffs):
-    df = setup_local_models(df)
-    lr=FederatedLogisticRegression(df['dataframe'])
-    df["y_pred_global"],df["y_proba_global"] = lr.predict_with_coefficients(df["X_test"], coeffs, best_threshold=df["best_threshold"])
-    return df
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -184,7 +181,9 @@ def main():
                 'Sex': np.float64(-0.013835696283748422),
                 'Intercept': np.float64(-0.07318725450566628)}
     
-    df=setup_model(dict_fr, coefs_test)
-    
+    model=FederatedLogisticRegression(dict_fr['dataframe'], local_epochs=5)
+    model.logistic_regression()
+    df=(dict_fr, coefs_test)
+    print(df)
 if __name__ == "__main__":
     main()
