@@ -1,7 +1,6 @@
 from federate_agregation import federated_averaging
 from logistic_regression import FederatedLogisticRegression
 import pandas as pd
-import numpy as np
 
 
 def setup_local_models(df):
@@ -49,7 +48,7 @@ def main():
             'y_proba_global':None,
             'best_threshold':None,
             'coefs':None}
-    dict_be= {'dataframe':df_fr[:50],
+    dict_be= {'dataframe':df_be[:50],
         'X_test':None,
         'y_test':None,
         'y_proba_local':None,

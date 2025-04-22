@@ -11,8 +11,6 @@ from sklearn.metrics import roc_curve
 from federate_agregation import federated_averaging
 
 
-np.array_split
-
 
 def youden_index_threshold(y_true, y_proba):
     fpr, tpr, thresholds = roc_curve(y_true, y_proba)
@@ -48,7 +46,7 @@ class FederatedLogisticRegression:
     """Ici, nous nous concentrons sur la regression logistique logistique dans un modèle fédéré. Je récupère les coefficients du modèle de RL pour les agréger et les réinjecter avec warm_start dans le modèle de RL.
     Je fais cela pour chaque client, puis j'agrège selon différentes méthodes.
     """
-    def __init__(self, df, local_epochs, federated_type="testSGD"):
+    def __init__(self, df, local_epochs, federated_type="Averaging"):
         self.df = df.dropna()
         self.X_train, self.X_test, self.y_train, self.y_test = self.split_data()
         self.exposure_test, self.exposure_train = self.X_test['Exposure'], self.X_train['Exposure']
@@ -71,15 +69,7 @@ class FederatedLogisticRegression:
                             max_iter=self.local_epochs, #  warm start
                             warm_start=True,
                             C=4)
-        elif self.federated_type == "testSGD":
-            self.model=SGDClassifier(random_state=42,
-                            penalty='l2',
-                            fit_intercept=True,
-                            eta0=0.01,
-                            learning_rate='adaptive',
-                            max_iter=self.local_epochs, #  warm start
-                            warm_start=True,
-                            loss="log_loss")
+
         
     def split_data(self, test_size=0.30):
         """
@@ -103,27 +93,12 @@ class FederatedLogisticRegression:
         self.X_train, self.X_test = self.normalize_dataframe(self.X_train, self.X_test)
         self.choose_model()
         classes = np.unique(self.y_train)
-
         
+        self.model.fit(self.X_train, self.y_train, classes=classes, sample_weight=self.exposure_train)
         
-        
-        class_weights = compute_class_weight(class_weight='balanced', classes=classes, y=self.y_train)
-
-        class_weight_dict = dict(zip(classes, class_weights))
-
-
-
-        sample_weights = self.y_train.map(class_weight_dict)
-        print(classes)
-        
-        self.model.partial_fit(self.X_train, self.y_train, classes=classes, sample_weight=sample_weights)
-        
-
         y_proba = self.model.predict_proba(self.X_test)[:, 1]
-        
-        y_proba = y_proba*self.exposure_train
         y_proba_adjusted = y_proba.tolist()
-        self.best_threshold, youden_index = youden_index_threshold(self.y_test, y_proba_adjusted)
+        self.best_threshold, _ = youden_index_threshold(self.y_test, y_proba_adjusted)
         y_pred = (np.array(y_proba) >= self.best_threshold).astype(int)
         coefficients = get_coefficients(self.model, self.X_train)
 

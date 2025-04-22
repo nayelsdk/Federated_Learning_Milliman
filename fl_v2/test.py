@@ -44,7 +44,7 @@ class FederatedLogisticRegression:
         self.scaler = StandardScaler()
         self.model = SGDClassifier(random_state=42, loss="log_loss", penalty='l2',
                                    fit_intercept=True, max_iter=1, warm_start=True,
-                                   learning_rate='adaptive', eta0=0.01)
+                                   learning_rate='constant', eta0=0.01)
         self.model.classes_ = np.array([0, 1])
         self.best_threshold = None
         self.loss_history = []
@@ -68,6 +68,9 @@ class FederatedLogisticRegression:
             if hasattr(self.model, 'coef_'):
                 print("\n[SGD Epoch {}/{}] Coefficients before SGD: {}".format(epoch + 1, self.local_epochs, self.model.coef_))
             self.model.partial_fit(self.X_train, self.y_train, classes=classes, sample_weight=sample_weights)
+            
+            
+            
             y_pred_proba = self.model.predict_proba(self.X_train)[:, 1]
             loss = log_loss(self.y_train, y_pred_proba, sample_weight=sample_weights)
             self.loss_history.append(loss)
@@ -213,6 +216,7 @@ def main():
 
     clients, snap = simulate_federated_learning([df_fr, df_be], rounds=10, local_epochs=5)
     plot_all_clients_losses(clients)
+    plot_all_weights(snap, export_path="weights_tracking", save_plots=True, save_csv=True)
 
     print("Simulation terminée.")
 if __name__ == "__main__":
