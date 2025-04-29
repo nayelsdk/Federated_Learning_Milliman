@@ -64,7 +64,6 @@ def federated_opt(clients, beta1=0.9, beta2=0.99, eta=1e-2, tau=1e-6, variant="a
     - "adagrad" : FedAdagrad
 
     Args:
-        clients: liste de clients, chacun avec un dict { 'coefs': dict, 'lr': ... }
         beta1: hyperparamètre du moment d'ordre 1
         beta2: hyperparamètre du moment d'ordre 2
         eta: learning rate serveur
