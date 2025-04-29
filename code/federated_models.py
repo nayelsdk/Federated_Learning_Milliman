@@ -113,8 +113,42 @@ class FederatedLogisticRegression:
             self.model.fit(self.X_train, self.y_train, sample_weight=self.exposure_train)
             history.append(self.get_coefficients())
         return history
+    def train_proximal(self, global_coefs, mu=0.01):
+        """
+        Mise à jour locale avec régularisation FedProx.
+        - global_coefs : dictionnaire des poids globaux
+        - mu : coefficient de pénalisation
+        Retourne les nouveaux coefficients après entraînement local.
+        """
+        self.choose_model()
+        n_epochs = self.local_epochs
 
-def federated_training(client_dicts, n_rounds=5, local_epochs=5):
+        # Initialisation des poids locaux = poids globaux
+        self.set_coefficients(global_coefs)
+
+        for _ in range(n_epochs):
+            self.model.fit(self.X_train, self.y_train, sample_weight=self.exposure_train)
+
+            # Récupération des coefficients mis à jour
+            local_coefs = self.get_coefficients()
+
+            # Ajustement proximal (wk ← wk − αμ(wk − w))
+            updated_coefs = {}
+            for key in local_coefs:
+                prox_term = mu * (local_coefs[key] - global_coefs[key])
+                updated_coefs[key] = local_coefs[key] - prox_term  # équivalent à wk ← wk − αμ(wk − w)
+
+            self.set_coefficients(updated_coefs)
+
+        return self.get_coefficients()
+
+def federated_training(client_dicts, n_rounds=5, local_epochs=5, aggregation_method='fed'):
+    """
+    aggregation_method : str
+        'avg' pour federated_averaging
+        'prox' pour federated_prox
+        'opt' pour federated_opt
+    """
 
     clients_history = [[] for _ in client_dicts]  # Historique des poids locaux
     global_history = []  # Liste de log des poids globaux
@@ -131,15 +165,23 @@ def federated_training(client_dicts, n_rounds=5, local_epochs=5):
 
             client["coefs"] = local_weights[-1]
 
-        # 2. Agrégation FedAvg
-        avg_coefs = federated_averaging(client_dicts)
-        global_history.append(avg_coefs)
+        # 2. Agrégation selon la méthode choisie
+        if aggregation_method == 'avg':
+            fed_coefs = federated_averaging(client_dicts)
+        elif aggregation_method == 'prox':
+            fed_coefs = federated_prox(client_dicts)
+        elif aggregation_method == 'opt':
+            fed_coefs = federated_opt(client_dicts)
+        else:
+            raise ValueError(f"⚠️ Méthode d'agrégation inconnue : {aggregation_method}")
+
+        global_history.append(fed_coefs)
 
         for i, client in enumerate(client_dicts):
-            client["lr"].set_coefficients(avg_coefs)
-            client["coefs"] = avg_coefs
+            client["lr"].set_coefficients(fed_coefs)
+            client["coefs"] = fed_coefs
 
-            clients_history[i].append(avg_coefs.copy())
+            clients_history[i].append(fed_coefs.copy())
 
     return clients_history, global_history
 
@@ -151,7 +193,8 @@ def federated_training(client_dicts, n_rounds=5, local_epochs=5):
 def main():
     features = ["Power","DriverAge","Fuel_type","Density","Sex", "Intercept"]
     local_epochs = 10
-    rounds = 10
+    rounds = 10 
+    
     df_fr = pd.read_csv("data/french_data.csv")
     df_be = pd.read_csv("data/belgium_data.csv")
     df_eu = pd.read_csv("data/european_data.csv")
