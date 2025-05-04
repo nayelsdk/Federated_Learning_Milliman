@@ -1,8 +1,6 @@
 import multiprocessing
 import time
 import subprocess
-import os
-import argparse
 
 def run_superlink():
     """Lancer le SuperLink (serveur Flower)"""
@@ -13,17 +11,7 @@ def run_supernode(client_id):
     """Lancer le SuperNode (client Flower)"""
     print(f"Démarrage du client {client_id}...")
     subprocess.run([
-        "flower-supernode",
-        "--insecure",
-        "--superlink=127.0.0.1:9091",
-        "--start-python", "client.py",  # Remplacez "client.py" par le chemin correct si nécessaire
-        "--", f"--client_id={client_id}"
-    ], check=True)
-
-def start_flower_process(client_id):
-    """Démarrer Flower pour chaque client"""
-    subprocess.run([
-        "python", "client.py", f"--client_id={client_id}"
+        "python3", "/home/onyxia/work/Federated_Learning_Milliman/Flower/client.py", f"--client_id={client_id}"
     ], check=True)
 
 def main():
