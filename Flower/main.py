@@ -1,38 +1,52 @@
 import multiprocessing
 import time
 import subprocess
+import os
+import argparse
 
 def run_superlink():
-    """Lancer le SuperLink (le serveur Flower moderne)"""
+    """Lancer le SuperLink (serveur Flower)"""
+    print("Démarrage du serveur SuperLink...")
     subprocess.run(["flower-superlink", "--insecure"], check=True)
 
 def run_supernode(client_id):
-    """Lancer le SuperNode (client Flower moderne)"""
+    """Lancer le SuperNode (client Flower)"""
+    print(f"Démarrage du client {client_id}...")
     subprocess.run([
         "flower-supernode",
         "--insecure",
         "--superlink=127.0.0.1:9091",
-        "--start-python", "client.py",
+        "--start-python", "client.py",  # Remplacez "client.py" par le chemin correct si nécessaire
         "--", f"--client_id={client_id}"
     ], check=True)
 
-if __name__ == "__main__":
-    # Lancer le serveur SuperLink (port 9091 par défaut)
+def start_flower_process(client_id):
+    """Démarrer Flower pour chaque client"""
+    subprocess.run([
+        "python", "client.py", f"--client_id={client_id}"
+    ], check=True)
+
+def main():
+    # Lancez le serveur SuperLink dans un processus séparé
     server_process = multiprocessing.Process(target=run_superlink)
     server_process.start()
 
-    time.sleep(3)  # Attendre que le SuperLink soit prêt
+    time.sleep(3)  # Attendre que le serveur SuperLink soit prêt
 
-    # Lancer les clients
+    # Lancez les clients dans des processus séparés
     client_processes = []
-    for cid in range(2):  # Ajuste le nombre de clients ici
+    num_clients = 2  # Nombre de clients à lancer, ajustez selon vos besoins
+    for cid in range(num_clients):
         p = multiprocessing.Process(target=run_supernode, args=(cid,))
         p.start()
         client_processes.append(p)
 
-    # Attendre que les clients terminent
+    # Attendez que les processus clients se terminent
     for p in client_processes:
         p.join()
 
-    # Terminer le serveur après les clients
+    # Terminer le serveur après la fin des clients
     server_process.terminate()
+
+if __name__ == "__main__":
+    main()

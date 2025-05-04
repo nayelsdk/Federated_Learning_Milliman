@@ -2,10 +2,13 @@ import argparse
 import flwr as fl
 import numpy as np
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, accuracy_score
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
-from load_csv_data import load_csv_data
+import os
+import json
+import warnings
+from load_csv_data import load_csv_data  # Assurez-vous que cette fonction est définie correctement.
 
 class SklearnFederatedClient(fl.client.NumPyClient):
     def __init__(self, client_id):
@@ -32,8 +35,14 @@ class SklearnFederatedClient(fl.client.NumPyClient):
             solver="saga",
         )
 
-        # Liste pour enregistrer les poids de chaque client
+        # Liste pour enregistrer les poids de chaque client et les scores à chaque itération
         self.coefs_history = []
+        self.f1_history = []
+        self.accuracy_history = []
+
+        # Création d'un répertoire pour sauvegarder les poids des modèles si nécessaire
+        if not os.path.exists(f"client_{self.client_id}_weights"):
+            os.makedirs(f"client_{self.client_id}_weights")
 
     def get_parameters(self, config):
         if not hasattr(self.model, "coef_"):
@@ -55,30 +64,60 @@ class SklearnFederatedClient(fl.client.NumPyClient):
         # Enregistrer les poids (coefficients) du modèle pour chaque client
         self.coefs_history.append(self.model.coef_)
 
-        return self.get_parameters(config), len(self.x_train), {}
+        # Évaluation du modèle sur les données de test
+        y_pred = self.model.predict(self.x_test)
+        f1 = f1_score(self.y_test, y_pred, average="macro")
+        accuracy = accuracy_score(self.y_test, y_pred)
+
+        # Enregistrer les scores de performance
+        self.f1_history.append(f1)
+        self.accuracy_history.append(accuracy)
+
+        # Sauvegarder les poids dans un fichier local après chaque itération
+        np.save(f"client_{self.client_id}_weights/weights_round_{config['round']}.npy", self.model.coef_)
+
+        return self.get_parameters(config), len(self.x_train), {"f1_score": f1, "accuracy": accuracy}
 
     def evaluate(self, parameters, config):
         self.set_parameters(parameters)
         y_pred = self.model.predict(self.x_test)
         f1 = f1_score(self.y_test, y_pred, average="macro")
-        return 0.0, len(self.y_test), {"f1_score": f1}
+        accuracy = accuracy_score(self.y_test, y_pred)
+        return 0.0, len(self.y_test), {"f1_score": f1, "accuracy": accuracy}
 
-    def plot_weights(self):
-        """Tracer les poids du modèle au fil du temps"""
-        # Transformer la liste des coefficients en un tableau numpy pour une manipulation plus facile
-        coefs_array = np.array(self.coefs_history)
+    def plot_performance(self):
+        """Tracer la performance du modèle au fil du temps (F1 et accuracy)."""
+        plt.figure(figsize=(12, 6))
 
-        # Tracer les coefficients pour chaque itération
-        plt.figure(figsize=(10, 6))
-        for i in range(coefs_array.shape[1]):  # Pour chaque feature (chaque colonne)
-            plt.plot(coefs_array[:, i], label=f"Feature {i + 1}")
-
+        # Tracer le F1 score
+        plt.subplot(1, 2, 1)
+        plt.plot(self.f1_history, label="F1 Score", color='blue')
         plt.xlabel("Itérations")
-        plt.ylabel("Poids")
-        plt.title(f"Evolution des poids du modèle pour le client {self.client_id}")
-        plt.legend()
+        plt.ylabel("F1 Score")
+        plt.title(f"Evolution du F1 Score pour le client {self.client_id}")
         plt.grid(True)
+        plt.legend()
+
+        # Tracer l'accuracy
+        plt.subplot(1, 2, 2)
+        plt.plot(self.accuracy_history, label="Accuracy", color='green')
+        plt.xlabel("Itérations")
+        plt.ylabel("Accuracy")
+        plt.title(f"Evolution de l'Accuracy pour le client {self.client_id}")
+        plt.grid(True)
+        plt.legend()
+
+        plt.tight_layout()
         plt.show()
+
+    def save_performance(self):
+        """Sauvegarder les scores F1 et Accuracy dans un fichier JSON."""
+        performance_data = {
+            "f1_score_history": self.f1_history,
+            "accuracy_history": self.accuracy_history,
+        }
+        with open(f"client_{self.client_id}_performance.json", 'w') as f:
+            json.dump(performance_data, f)
 
 if __name__ == "__main__":
     from flwr.client import start_client
@@ -88,7 +127,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     client = SklearnFederatedClient(client_id=args.client_id)
-    start_client(server_address="127.0.0.1:9092", client=client.to_client()) 
+    start_client(server_address="127.0.0.1:9092", client=client.to_client())
 
-    # Appeler plot_weights après l'entraînement pour afficher les poids
-    client.plot_weights()
+    # Appeler plot_performance après l'entraînement pour afficher les performances
+    client.plot_performance()
+    client.save_performance()  # Sauvegarder les performances dans un fichier JSON
