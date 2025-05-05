@@ -207,5 +207,7 @@ def main():
             "lr": FederatedLogisticRegression(df, local_epochs=local_epochs),
             "coefs": None
         })
+    
+    federated_training(client_dicts)
 if __name__ == "__main__":
     main()

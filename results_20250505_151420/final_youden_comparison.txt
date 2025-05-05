@@ -1,0 +1,87 @@
+Comparaison des indices de Youden finaux
+==================================================
+
+France:
+------------------------------
+FedAvg:
+  Indice de Youden: 0.1645
+  Seuil optimal: 0.2457
+  Sensibilité: 0.6503
+  Spécificité: 0.5142
+
+FedProx:
+  Indice de Youden: 0.1606
+  Seuil optimal: 0.1717
+  Sensibilité: 0.7523
+  Spécificité: 0.4082
+
+FedOpt:
+  Indice de Youden: 0.1695
+  Seuil optimal: 0.2243
+  Sensibilité: 0.6918
+  Spécificité: 0.4777
+
+
+Belgique:
+------------------------------
+FedAvg:
+  Indice de Youden: 0.0519
+  Seuil optimal: 0.2621
+  Sensibilité: 0.9204
+  Spécificité: 0.1315
+
+FedProx:
+  Indice de Youden: 0.0553
+  Seuil optimal: 0.2450
+  Sensibilité: 0.9339
+  Spécificité: 0.1214
+
+FedOpt:
+  Indice de Youden: 0.0592
+  Seuil optimal: 0.3162
+  Sensibilité: 0.9067
+  Spécificité: 0.1525
+
+
+Europe:
+------------------------------
+FedAvg:
+  Indice de Youden: 0.2032
+  Seuil optimal: 0.2418
+  Sensibilité: 0.7959
+  Spécificité: 0.4073
+
+FedProx:
+  Indice de Youden: 0.2040
+  Seuil optimal: 0.2397
+  Sensibilité: 0.7934
+  Spécificité: 0.4107
+
+FedOpt:
+  Indice de Youden: 0.2027
+  Seuil optimal: 0.2224
+  Sensibilité: 0.8217
+  Spécificité: 0.3810
+
+
+Global:
+------------------------------
+FedAvg:
+  Indice de Youden: 0.2044
+  Seuil optimal: 0.2507
+  Sensibilité: 0.7650
+  Spécificité: 0.4394
+
+FedProx:
+  Indice de Youden: 0.2036
+  Seuil optimal: 0.2398
+  Sensibilité: 0.7738
+  Spécificité: 0.4297
+
+FedOpt:
+  Indice de Youden: 0.2047
+  Seuil optimal: 0.2448
+  Sensibilité: 0.7708
+  Spécificité: 0.4338
+
+

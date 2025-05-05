@@ -1,4 +1,3 @@
-
 def federated_averaging(clients: list, verbose=True):
     avg_coefs = {}
     dataset_weights = []

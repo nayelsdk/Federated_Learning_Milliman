@@ -1,0 +1,543 @@
+Indices de Youden pour FedProx
+==================================================
+
+Round 1/20
+------------------------------
+France:
+  Indice de Youden: 0.1643
+  Seuil optimal: 0.2138
+  Sensibilité: 0.7037
+  Spécificité: 0.4606
+
+Belgique:
+  Indice de Youden: 0.0572
+  Seuil optimal: 0.2461
+  Sensibilité: 0.9395
+  Spécificité: 0.1177
+
+Europe:
+  Indice de Youden: 0.2064
+  Seuil optimal: 0.2673
+  Sensibilité: 0.7688
+  Spécificité: 0.4376
+
+Global:
+  Indice de Youden: 0.2057
+  Seuil optimal: 0.2662
+  Sensibilité: 0.7519
+  Spécificité: 0.4538
+
+
+Round 2/20
+------------------------------
+France:
+  Indice de Youden: 0.1702
+  Seuil optimal: 0.2235
+  Sensibilité: 0.6870
+  Spécificité: 0.4832
+
+Belgique:
+  Indice de Youden: 0.1022
+  Seuil optimal: 0.4379
+  Sensibilité: 0.5876
+  Spécificité: 0.5147
+
+Europe:
+  Indice de Youden: 0.2059
+  Seuil optimal: 0.2415
+  Sensibilité: 0.7892
+  Spécificité: 0.4167
+
+Global:
+  Indice de Youden: 0.2075
+  Seuil optimal: 0.2426
+  Sensibilité: 0.7729
+  Spécificité: 0.4346
+
+
+Round 3/20
+------------------------------
+France:
+  Indice de Youden: 0.1690
+  Seuil optimal: 0.2488
+  Sensibilité: 0.6868
+  Spécificité: 0.4822
+
+Belgique:
+  Indice de Youden: 0.0597
+  Seuil optimal: 0.3169
+  Sensibilité: 0.9212
+  Spécificité: 0.1385
+
+Europe:
+  Indice de Youden: 0.2008
+  Seuil optimal: 0.2637
+  Sensibilité: 0.7927
+  Spécificité: 0.4081
+
+Global:
+  Indice de Youden: 0.2029
+  Seuil optimal: 0.2646
+  Sensibilité: 0.7768
+  Spécificité: 0.4260
+
+
+Round 4/20
+------------------------------
+France:
+  Indice de Youden: 0.1709
+  Seuil optimal: 0.2029
+  Sensibilité: 0.7170
+  Spécificité: 0.4539
+
+Belgique:
+  Indice de Youden: 0.0850
+  Seuil optimal: 0.4561
+  Sensibilité: 0.4416
+  Spécificité: 0.6434
+
+Europe:
+  Indice de Youden: 0.2076
+  Seuil optimal: 0.2498
+  Sensibilité: 0.7802
+  Spécificité: 0.4273
+
+Global:
+  Indice de Youden: 0.2082
+  Seuil optimal: 0.2498
+  Sensibilité: 0.7636
+  Spécificité: 0.4446
+
+
+Round 5/20
+------------------------------
+France:
+  Indice de Youden: 0.1672
+  Seuil optimal: 0.2247
+  Sensibilité: 0.6980
+  Spécificité: 0.4692
+
+Belgique:
+  Indice de Youden: 0.0853
+  Seuil optimal: 0.4772
+  Sensibilité: 0.4598
+  Spécificité: 0.6255
+
+Europe:
+  Indice de Youden: 0.2074
+  Seuil optimal: 0.2659
+  Sensibilité: 0.7785
+  Spécificité: 0.4289
+
+Global:
+  Indice de Youden: 0.2073
+  Seuil optimal: 0.2692
+  Sensibilité: 0.7570
+  Spécificité: 0.4503
+
+
+Round 6/20
+------------------------------
+France:
+  Indice de Youden: 0.1675
+  Seuil optimal: 0.2638
+  Sensibilité: 0.6735
+  Spécificité: 0.4940
+
+Belgique:
+  Indice de Youden: 0.0580
+  Seuil optimal: 0.3095
+  Sensibilité: 0.9252
+  Spécificité: 0.1328
+
+Europe:
+  Indice de Youden: 0.2040
+  Seuil optimal: 0.2683
+  Sensibilité: 0.8022
+  Spécificité: 0.4018
+
+Global:
+  Indice de Youden: 0.2055
+  Seuil optimal: 0.2683
+  Sensibilité: 0.7853
+  Spécificité: 0.4202
+
+
+Round 7/20
+------------------------------
+France:
+  Indice de Youden: 0.1638
+  Seuil optimal: 0.1969
+  Sensibilité: 0.7233
+  Spécificité: 0.4405
+
+Belgique:
+  Indice de Youden: 0.0579
+  Seuil optimal: 0.2768
+  Sensibilité: 0.9219
+  Spécificité: 0.1360
+
+Europe:
+  Indice de Youden: 0.2018
+  Seuil optimal: 0.2560
+  Sensibilité: 0.7703
+  Spécificité: 0.4315
+
+Global:
+  Indice de Youden: 0.2029
+  Seuil optimal: 0.2561
+  Sensibilité: 0.7537
+  Spécificité: 0.4491
+
+
+Round 8/20
+------------------------------
+France:
+  Indice de Youden: 0.1678
+  Seuil optimal: 0.2111
+  Sensibilité: 0.7356
+  Spécificité: 0.4322
+
+Belgique:
+  Indice de Youden: 0.0598
+  Seuil optimal: 0.3031
+  Sensibilité: 0.9254
+  Spécificité: 0.1344
+
+Europe:
+  Indice de Youden: 0.2006
+  Seuil optimal: 0.2667
+  Sensibilité: 0.7868
+  Spécificité: 0.4138
+
+Global:
+  Indice de Youden: 0.2032
+  Seuil optimal: 0.2674
+  Sensibilité: 0.7711
+  Spécificité: 0.4322
+
+
+Round 9/20
+------------------------------
+France:
+  Indice de Youden: 0.1689
+  Seuil optimal: 0.2387
+  Sensibilité: 0.6953
+  Spécificité: 0.4736
+
+Belgique:
+  Indice de Youden: 0.0981
+  Seuil optimal: 0.4864
+  Sensibilité: 0.5780
+  Spécificité: 0.5201
+
+Europe:
+  Indice de Youden: 0.2059
+  Seuil optimal: 0.2501
+  Sensibilité: 0.8108
+  Spécificité: 0.3950
+
+Global:
+  Indice de Youden: 0.2073
+  Seuil optimal: 0.2672
+  Sensibilité: 0.7708
+  Spécificité: 0.4365
+
+
+Round 10/20
+------------------------------
+France:
+  Indice de Youden: 0.1691
+  Seuil optimal: 0.2018
+  Sensibilité: 0.7281
+  Spécificité: 0.4411
+
+Belgique:
+  Indice de Youden: 0.0572
+  Seuil optimal: 0.2670
+  Sensibilité: 0.9275
+  Spécificité: 0.1297
+
+Europe:
+  Indice de Youden: 0.1998
+  Seuil optimal: 0.2266
+  Sensibilité: 0.8162
+  Spécificité: 0.3836
+
+Global:
+  Indice de Youden: 0.2024
+  Seuil optimal: 0.2487
+  Sensibilité: 0.7677
+  Spécificité: 0.4347
+
+
+Round 11/20
+------------------------------
+France:
+  Indice de Youden: 0.1691
+  Seuil optimal: 0.2639
+  Sensibilité: 0.6762
+  Spécificité: 0.4928
+
+Belgique:
+  Indice de Youden: 0.0708
+  Seuil optimal: 0.5345
+  Sensibilité: 0.4899
+  Spécificité: 0.5809
+
+Europe:
+  Indice de Youden: 0.2053
+  Seuil optimal: 0.2695
+  Sensibilité: 0.8030
+  Spécificité: 0.4023
+
+Global:
+  Indice de Youden: 0.2071
+  Seuil optimal: 0.2836
+  Sensibilité: 0.7668
+  Spécificité: 0.4403
+
+
+Round 12/20
+------------------------------
+France:
+  Indice de Youden: 0.1665
+  Seuil optimal: 0.1984
+  Sensibilité: 0.7548
+  Spécificité: 0.4117
+
+Belgique:
+  Indice de Youden: 0.1134
+  Seuil optimal: 0.5002
+  Sensibilité: 0.6100
+  Spécificité: 0.5035
+
+Europe:
+  Indice de Youden: 0.2102
+  Seuil optimal: 0.2744
+  Sensibilité: 0.7933
+  Spécificité: 0.4168
+
+Global:
+  Indice de Youden: 0.2099
+  Seuil optimal: 0.2696
+  Sensibilité: 0.7817
+  Spécificité: 0.4282
+
+
+Round 13/20
+------------------------------
+France:
+  Indice de Youden: 0.1693
+  Seuil optimal: 0.2362
+  Sensibilité: 0.6938
+  Spécificité: 0.4755
+
+Belgique:
+  Indice de Youden: 0.0607
+  Seuil optimal: 0.3154
+  Sensibilité: 0.9183
+  Spécificité: 0.1424
+
+Europe:
+  Indice de Youden: 0.2035
+  Seuil optimal: 0.2492
+  Sensibilité: 0.8035
+  Spécificité: 0.4001
+
+Global:
+  Indice de Youden: 0.2052
+  Seuil optimal: 0.2593
+  Sensibilité: 0.7728
+  Spécificité: 0.4324
+
+
+Round 14/20
+------------------------------
+France:
+  Indice de Youden: 0.1691
+  Seuil optimal: 0.2309
+  Sensibilité: 0.6946
+  Spécificité: 0.4745
+
+Belgique:
+  Indice de Youden: 0.0569
+  Seuil optimal: 0.2940
+  Sensibilité: 0.9172
+  Spécificité: 0.1396
+
+Europe:
+  Indice de Youden: 0.2006
+  Seuil optimal: 0.2504
+  Sensibilité: 0.7941
+  Spécificité: 0.4065
+
+Global:
+  Indice de Youden: 0.2029
+  Seuil optimal: 0.2543
+  Sensibilité: 0.7730
+  Spécificité: 0.4298
+
+
+Round 15/20
+------------------------------
+France:
+  Indice de Youden: 0.1643
+  Seuil optimal: 0.1952
+  Sensibilité: 0.7339
+  Spécificité: 0.4304
+
+Belgique:
+  Indice de Youden: 0.0552
+  Seuil optimal: 0.2719
+  Sensibilité: 0.9252
+  Spécificité: 0.1301
+
+Europe:
+  Indice de Youden: 0.2028
+  Seuil optimal: 0.2464
+  Sensibilité: 0.7969
+  Spécificité: 0.4058
+
+Global:
+  Indice de Youden: 0.2030
+  Seuil optimal: 0.2464
+  Sensibilité: 0.7786
+  Spécificité: 0.4244
+
+
+Round 16/20
+------------------------------
+France:
+  Indice de Youden: 0.1664
+  Seuil optimal: 0.2311
+  Sensibilité: 0.6945
+  Spécificité: 0.4719
+
+Belgique:
+  Indice de Youden: 0.0583
+  Seuil optimal: 0.2912
+  Sensibilité: 0.9250
+  Spécificité: 0.1333
+
+Europe:
+  Indice de Youden: 0.2005
+  Seuil optimal: 0.2443
+  Sensibilité: 0.8056
+  Spécificité: 0.3950
+
+Global:
+  Indice de Youden: 0.2021
+  Seuil optimal: 0.2486
+  Sensibilité: 0.7830
+  Spécificité: 0.4191
+
+
+Round 17/20
+------------------------------
+France:
+  Indice de Youden: 0.1647
+  Seuil optimal: 0.1925
+  Sensibilité: 0.7314
+  Spécificité: 0.4333
+
+Belgique:
+  Indice de Youden: 0.0565
+  Seuil optimal: 0.2546
+  Sensibilité: 0.9326
+  Spécificité: 0.1239
+
+Europe:
+  Indice de Youden: 0.2008
+  Seuil optimal: 0.2613
+  Sensibilité: 0.7664
+  Spécificité: 0.4344
+
+Global:
+  Indice de Youden: 0.2022
+  Seuil optimal: 0.2534
+  Sensibilité: 0.7613
+  Spécificité: 0.4409
+
+
+Round 18/20
+------------------------------
+France:
+  Indice de Youden: 0.1655
+  Seuil optimal: 0.2140
+  Sensibilité: 0.7104
+  Spécificité: 0.4551
+
+Belgique:
+  Indice de Youden: 0.0705
+  Seuil optimal: 0.4861
+  Sensibilité: 0.4387
+  Spécificité: 0.6318
+
+Europe:
+  Indice de Youden: 0.2069
+  Seuil optimal: 0.2438
+  Sensibilité: 0.8068
+  Spécificité: 0.4000
+
+Global:
+  Indice de Youden: 0.2069
+  Seuil optimal: 0.2389
+  Sensibilité: 0.7954
+  Spécificité: 0.4115
+
+
+Round 19/20
+------------------------------
+France:
+  Indice de Youden: 0.1659
+  Seuil optimal: 0.2210
+  Sensibilité: 0.7095
+  Spécificité: 0.4564
+
+Belgique:
+  Indice de Youden: 0.0959
+  Seuil optimal: 0.4816
+  Sensibilité: 0.5373
+  Spécificité: 0.5586
+
+Europe:
+  Indice de Youden: 0.2080
+  Seuil optimal: 0.2569
+  Sensibilité: 0.7947
+  Spécificité: 0.4133
+
+Global:
+  Indice de Youden: 0.2084
+  Seuil optimal: 0.2571
+  Sensibilité: 0.7761
+  Spécificité: 0.4323
+
+
+Round 20/20
+------------------------------
+France:
+  Indice de Youden: 0.1696
+  Seuil optimal: 0.2271
+  Sensibilité: 0.7123
+  Spécificité: 0.4573
+
+Belgique:
+  Indice de Youden: 0.0828
+  Seuil optimal: 0.4874
+  Sensibilité: 0.5878
+  Spécificité: 0.4950
+
+Europe:
+  Indice de Youden: 0.2065
+  Seuil optimal: 0.2524
+  Sensibilité: 0.8066
+  Spécificité: 0.3999
+
+Global:
+  Indice de Youden: 0.2077
+  Seuil optimal: 0.2552
+  Sensibilité: 0.7852
+  Spécificité: 0.4225
+
+
