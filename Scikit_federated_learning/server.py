@@ -4,6 +4,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import log_loss
 import pandas as pd
 
+from flwr.server import ServerConfig
+
 # Load test data from EU for global evaluation
 X_test, y_test = utils.load_custom_data("/home/onyxia/work/Federated_Learning_Milliman/data/european_data.csv")
 from sklearn.model_selection import train_test_split
@@ -24,9 +26,14 @@ def fit_round(rnd):
     return {"rnd": rnd}
 
 strategy = fl.server.strategy.FedAvg(
-    eval_fn=get_eval_fn(model),
+    evaluate_fn=get_eval_fn(model),
     on_fit_config_fn=fit_round,
     min_available_clients=2,
 )
 
-fl.server.start_server("0.0.0.0:8080", strategy=strategy, config={"num_rounds": 5})
+config = ServerConfig(num_rounds=5)
+fl.server.start_server(
+    server_address="0.0.0.0:8081",  # <- mot-clé requis maintenant
+    config=config,
+    strategy=strategy
+)

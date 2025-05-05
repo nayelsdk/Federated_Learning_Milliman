@@ -41,4 +41,4 @@ class BelgiumClient(fl.client.NumPyClient):
         acc = model.score(X_test, y_test)
         return loss, len(X_test), {"accuracy": acc}
 
-fl.client.start_numpy_client("0.0.0.0:8080", client=BelgiumClient())
+fl.client.start_numpy_client(server_address="0.0.0.0:8081", client=BelgiumClient())
