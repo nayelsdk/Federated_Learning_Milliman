@@ -1,6 +1,0 @@
-Date: 2025-05-05 16:26:54
-Nombre de rounds: 20
-Époques locales: 20
-FedProx mu: 0.01
-FedOpt optimizer: adam
-FedOpt server_lr: 0.1

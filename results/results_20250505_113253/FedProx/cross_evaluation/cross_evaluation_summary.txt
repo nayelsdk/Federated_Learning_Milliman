@@ -1,0 +1,54 @@
+Résumé de l'évaluation croisée
+============================
+
+Modèle source: France
+--------------------------------------------------
+  Sur données France:
+    AUC modèle local: 0.6167
+    AUC modèle fédéré: 0.6185
+    Amélioration: 0.19%
+
+  Sur données Belgique:
+    AUC modèle local: 0.5144
+    AUC modèle fédéré: 0.5548
+    Amélioration: 4.03%
+
+  Sur données Europe:
+    AUC modèle local: 0.6156
+    AUC modèle fédéré: 0.6284
+    Amélioration: 1.28%
+
+Modèle source: Belgique
+--------------------------------------------------
+  Sur données France:
+    AUC modèle local: 0.6140
+    AUC modèle fédéré: 0.6185
+    Amélioration: 0.46%
+
+  Sur données Belgique:
+    AUC modèle local: 0.5816
+    AUC modèle fédéré: 0.5548
+    Amélioration: -2.68%
+
+  Sur données Europe:
+    AUC modèle local: 0.6390
+    AUC modèle fédéré: 0.6284
+    Amélioration: -1.06%
+
+Modèle source: Europe
+--------------------------------------------------
+  Sur données France:
+    AUC modèle local: 0.6141
+    AUC modèle fédéré: 0.6185
+    Amélioration: 0.44%
+
+  Sur données Belgique:
+    AUC modèle local: 0.5684
+    AUC modèle fédéré: 0.5548
+    Amélioration: -1.37%
+
+  Sur données Europe:
+    AUC modèle local: 0.6379
+    AUC modèle fédéré: 0.6284
+    Amélioration: -0.95%
+
