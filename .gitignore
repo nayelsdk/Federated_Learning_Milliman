@@ -1,2 +1,4 @@
 *.csv
 results/
+data/
+data_augmentation/
