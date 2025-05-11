@@ -1,13 +1,70 @@
 # Federated_Learning_Milliman
 
-![Logo Milliamn](logo_milliman.png)
+![Logo Milliman](logo_milliman.png)
 
-Projet de Statistiques Appliquées en partenariat avec Milliman France, cabinet de conseil en actuariat, dans le cadre du cycle ingénieur de l'ENSAE.
+<p align="center">Projet de Statistiques Appliquées en partenariat avec <strong>Milliman France</strong>, cabinet de conseil en actuariat, réalisé dans le cadre du cycle ingénieur de <strong>l'ENSAE Paris</strong>.</p>
 
-Durant ce projet, nous avons exploré un nouveau paradigme émergent dans le sectur assurantiel : le _Federated Learning_ (Apprentissage fédéré).
+Ce projet explore l'application du **Federated Learning (Apprentissage Fédéré)** dans le domaine assurantiel, en réponse aux contraintes de confidentialité des données et à l'hétérogénéité entre compagnies d’assurance.
 
-Pour installer blablabla
+Le projet vise à prédire la survenue d’un sinistre automobile tout en respectant les contraintes de confidentialité imposées par des réglementations comme le RGPD. Trois algorithmes d'apprentissage fédéré ont été testés : **FedAvg**, **FedProx**, et **FedOpt**.
 
-# Remerciements
+## 🗂️ Données utilisées
 
-kf kfdsk
+- **freMTPL** (France)
+- **beMTPL** (Belgique)
+- **euMTPL** (Europe/Italie)
+
+Sources : [CASDatasets](https://cas.uqam.ca/pub/web/CASdatasets-manual.pdf)
+
+## 🔧 Installation
+
+```bash
+git clone https://github.com/nayelsdk/Federated_Learning_Milliman.git
+cd Federated_Learning_Milliman
+pip install -r requirements.txt
+```
+
+## 📁 Structure du projet
+
+L'organisation du projet est la suivante :
+
+```
+FEDERATED_LEARNING_MILLIMAN/
+│   └── raw_data/...                # Données brutes récupérées sur CASDatasets
+├── clean_data_final/               # Scripts Jupyter et fichiers bruts pour nettoyage
+│   ├── beMTPL.ipynb
+│   ├── euMTPL.ipynb
+│   ├── freMTPL.ipynb
+│   ├── code-postaux-belge.csv
+│   ├── provinces_italie.csv
+│   └── wiki_scraping.csv
+├── Stat_desc.ipynb                 # Script Jupyter qui réalise l'ensemble des statistiques descriptives de nos données
+├── data/                           # Données nettoyées par clean_data_final
+│   ├── belgium_data.csv
+│   ├── french_data.csv
+│   ├── european_data.csv
+├── data_augmentation.ipynb         # Script Jupyter qui applique  SMOTENC (data-augmentation) aux données dans le dossier data
+├── data_augmentation/...           # Données issues de data_augmentation.ipynb (comporte le même contenu que le dossier data)
+├── fl_insurance/
+│   └── code/                       # Code source du projet
+│       ├── clients.py              # Modélisation côté client
+│       ├── data.py                 # Chargement et traitement des données
+│       ├── evaluation.py           # Outils d’évaluation des modèles
+│       ├── main.py                 # Script principal d'entraînement
+│       ├── servers.py              # Comportement du serveur fédéré selon FedAvg et FedOpt
+├── requirements.txt                # Ensemble des installations nécessaires pour que le projet tourne
+├── rapport.pdf                     # Rapport final du projet avec tous les résultats (work in progress ... 🚧)
+├── slides.pdf                      # Support visuel de la soutenance du 05/06/2025 (work in progress ... 🚧)
+├── note_de_synthèse.pdf            # Note de synthèse du projet (work in progress ... 🚧)
+```
+
+## 👑 Remerciements
+
+Nous remercions **François HU**, Head of AI Lab chez Milliman, ainsi que **Fallou NIAKH**, encadrant de la voie Actuariat à l’ENSAE Paris, pour leur accompagnement tout au long de ce projet.
+
+## ⬇️ Auteurs
+
+- [Kevin ABE](https://www.linkedin.com/in/kevin-abe-a57a52253/)
+- [BENABDESADOK Nayel](https://www.linkedin.com/in/nayel-benabdesadok)
+- [Crespin HOUNKPEVI](https://www.linkedin.com/in/crespin-hounkpevi-074495297/)
+- [REN Alexandre](https://www.linkedin.com/in/alexandre-ren-a53a04292)
