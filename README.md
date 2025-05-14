@@ -53,7 +53,7 @@ FEDERATED_LEARNING_MILLIMAN/
 ├── note_de_synthèse.pdf            # Note de synthèse du projet (work in progress ... 🚧)
 ```
 
-Il est nécessaire de lancer les fichiers notebook de clean_data_final afin de faire apparaitre le dossier `data` puis le notebook `data_augmentation.ipynb`pour créer le dossier ``data_augmentation`
+Il est nécessaire de lancer les fichiers notebook de clean_data_final afin de faire apparaitre le dossier `data` puis le notebook `data_augmentation.ipynb`pour créer le dossier `data_augmentation`.
 
 ```
 ├── data/                           # Données nettoyées par clean_data_final
