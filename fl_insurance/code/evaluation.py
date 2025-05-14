@@ -7,11 +7,9 @@ import os
 def evaluate_cross_performance(local_models, global_model, X_test_dict, y_test_dict, exposure_test_dict, results_dir):
     """Évalue les performances croisées des modèles locaux vs. modèle global"""
     
-    # Créer un dossier pour les résultats de l'évaluation croisée
     cross_eval_dir = os.path.join(results_dir, "cross_evaluation")
     os.makedirs(cross_eval_dir, exist_ok=True)
     
-    # Pour chaque paire (modèle source, données cible)
     results = {}
     
     for source_id, source_model in local_models.items():
@@ -22,11 +20,11 @@ def evaluate_cross_performance(local_models, global_model, X_test_dict, y_test_d
             y_test = y_test_dict[target_id]
             exposure_test = exposure_test_dict[target_id]
             
-            # Prédiction avec le modèle local source
+            # modèle local source
             y_pred_local = source_model.predict_proba(X_test)[:, 1] * exposure_test
             local_auc = roc_auc_score(y_test, y_pred_local)
             
-            # Prédiction avec le modèle global fédéré
+            # modèle global fédéré
             y_pred_global = global_model.predict_proba(X_test)[:, 1] * exposure_test
             global_auc = roc_auc_score(y_test, y_pred_global)
             
@@ -78,15 +76,13 @@ def evaluate_cross_performance(local_models, global_model, X_test_dict, y_test_d
 
 def plot_results(server, clients, feature_names, algo_dir):
     """Génère et sauvegarde les graphiques pour un algorithme"""
-    # 1. Évolution des poids
+    # Évolution des poids globaux et locaux + intercept
     for i, feature in enumerate(feature_names):
         plt.figure(figsize=(12, 6))
         
-        # Poids globaux
         global_weights = [coef[i] for coef in server.weight_history['coef']]
         plt.plot(range(1, len(global_weights)+1), global_weights, 'r-o', linewidth=2, label='Global')
         
-        # Poids locaux
         for client in clients:
             client_weights = [coef[i] for coef in client.weight_history['coef']]
             plt.plot(range(1, len(client_weights)+1), client_weights, '-o', linewidth=2, label=client.client_id)
@@ -99,7 +95,6 @@ def plot_results(server, clients, feature_names, algo_dir):
         plt.savefig(f"{algo_dir}/weight_{feature}.png")
         plt.close()
     
-    # 2. Évolution de l'intercept
     plt.figure(figsize=(12, 6))
     plt.plot(range(1, len(server.weight_history['intercept'])+1), 
             server.weight_history['intercept'], 'r-o', linewidth=2, label='Global')
@@ -116,7 +111,7 @@ def plot_results(server, clients, feature_names, algo_dir):
     plt.savefig(f"{algo_dir}/intercept.png")
     plt.close()
     
-    # 3. Évolution de l'AUC
+    # AUC
     plt.figure(figsize=(12, 6))
     plt.plot(range(1, len(server.auc_history['Global'])+1), 
             server.auc_history['Global'], 'k-o', linewidth=2, label='Global')
@@ -133,7 +128,7 @@ def plot_results(server, clients, feature_names, algo_dir):
     plt.savefig(f"{algo_dir}/auc.png")
     plt.close()
     
-    # 4. Évolution de l'indice de Youden
+    # indice de Youden
     plt.figure(figsize=(12, 6))
     youden_values_global = [data['youden_index'] for data in server.youden_history['Global']]
     plt.plot(range(1, len(youden_values_global)+1), 
@@ -152,7 +147,7 @@ def plot_results(server, clients, feature_names, algo_dir):
     plt.savefig(f"{algo_dir}/youden_index.png")
     plt.close()
     
-    # 5. Évolution de la loss par client
+    # loss par client
     plt.figure(figsize=(12, 6))
     for client in clients:
         plt.plot(range(1, len(client.loss_history)+1), client.loss_history, '-o', linewidth=2, label=client.client_id)

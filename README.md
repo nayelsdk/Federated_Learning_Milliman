@@ -62,6 +62,8 @@ FEDERATED_LEARNING_MILLIMAN/
 
 Nous remercions **François HU**, Head of AI Lab chez Milliman, ainsi que **Fallou NIAKH**, encadrant de la voie Actuariat à l’ENSAE Paris, pour leur accompagnement tout au long de ce projet.
 
+Nous tenions également à remercier notre référente **Mme. Caroline HILLAIRET**, responsable de la voie Actuariat à l'ENSAE Paris, pour ses conseils et son cadrage de projet.
+
 ## ⬇️ Auteurs
 
 - [Kevin ABE](https://www.linkedin.com/in/kevin-abe-a57a52253/)
