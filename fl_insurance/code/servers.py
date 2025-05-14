@@ -11,7 +11,7 @@ def calculate_youden_index(y_true, y_pred_proba):
     """
     fpr, tpr, thresholds = roc_curve(y_true, y_pred_proba)
     
-    # Calculer l'indice de Youden pour chaque seuil
+    # l'indice de Youden pour chaque seuil
     youden_indices = tpr - fpr  # équivalent à: sensibilité + spécificité - 1
     
     # Trouver le seuil optimal (celui qui maximise l'indice de Youden)
@@ -19,7 +19,6 @@ def calculate_youden_index(y_true, y_pred_proba):
     optimal_threshold = thresholds[optimal_idx]
     optimal_youden = youden_indices[optimal_idx]
     
-    # Sensibilité et spécificité au seuil optimal
     optimal_sensitivity = tpr[optimal_idx]
     optimal_specificity = 1 - fpr[optimal_idx]
     
@@ -33,8 +32,8 @@ def calculate_youden_index(y_true, y_pred_proba):
     }
 
 class BaseServer:
-    def __init__(self, clients, feature_names, clip_intercept=True):
-        """Initialise le serveur d'agrégation"""
+    """Initialise le serveur d'agrégation"""
+    def __init__(self, clients, feature_names, clip_intercept=False):
         self.clients = clients
         self.n_rounds = clients[0].n_rounds
         self.feature_names = feature_names
@@ -45,7 +44,7 @@ class BaseServer:
             loss="log_loss",
             penalty="l2",
             alpha=0.01,
-            class_weight='balanced',
+            class_weight='balanced', # pour gérer le déséquilibre des classes
             max_iter=1,
             warm_start=True,
             random_state=42
@@ -78,7 +77,7 @@ class BaseServer:
         
         self.global_model.coef_ = avg_coef
         
-        # Contrôler l'intercept
+        #  intercept
         if self.clip_intercept:
             self.global_model.intercept_ = np.clip(avg_intercept, -5, 5)
         else:
@@ -91,7 +90,7 @@ class BaseServer:
         imputer = SimpleImputer(strategy='mean')
         
         for round_idx in range(self.n_rounds):
-            print(f"\n📊 Round {round_idx+1}/{self.n_rounds}")
+            print(f"\n --> Round {round_idx+1}/{self.n_rounds} <--")
             
             # Entraînement local
             local_models = []
@@ -102,10 +101,9 @@ class BaseServer:
                 local_models.append(local_model)
                 weights.append(len(client.batches[round_idx][0]))
             
-            # Agrégation
+            # Agrégation et enregistrement des poids
             self.global_model = self.aggregate_models(local_models, weights)
             
-            # Enregistrer les poids globaux
             self.weight_history['coef'].append(np.copy(self.global_model.coef_[0]))
             self.weight_history['intercept'].append(np.copy(self.global_model.intercept_[0]))
             
@@ -127,11 +125,9 @@ class BaseServer:
                 # Prédiction avec le modèle global, ajustée par l'exposition
                 y_pred = self.global_model.predict_proba(X_test_clean)[:, 1] * exposure_test
                 
-                # Calcul de l'AUC
                 auc = roc_auc_score(y_test, y_pred)
                 self.auc_history[client.client_id].append(auc)
                 
-                # Calcul de l'indice de Youden
                 youden_results = calculate_youden_index(y_test, y_pred)
                 self.youden_history[client.client_id].append(youden_results)
                 
@@ -162,6 +158,8 @@ class FedAvgServer(BaseServer):
     pass  # Hérite directement de BaseServer sans modifications
 
 class FedOptServer(BaseServer):
+    """On modifie la méthode d'agrégation pour cette méthode avec Adam, Adagrad et Yogi
+    """
     def __init__(self, clients, feature_names, clip_intercept=True, 
                  server_lr=0.1, beta1=0.9, beta2=0.99, tau=1e-3, optimizer="adam"):
         super().__init__(clients, feature_names, clip_intercept)
@@ -193,29 +191,26 @@ class FedOptServer(BaseServer):
         delta_coef = avg_coef - self.global_model.coef_
         delta_intercept = avg_intercept - self.global_model.intercept_
         
-        # Mettre à jour les moments selon l'optimiseur choisi
+        # Update des moments selon l'optimiseur choisi
         self.m = self.beta1 * self.m + (1 - self.beta1) * delta_coef
         self.m_intercept = self.beta1 * self.m_intercept + (1 - self.beta1) * delta_intercept
         
         if self.optimizer == "adam":
-            # Mise à jour Adam
             self.v = self.beta2 * self.v + (1 - self.beta2) * (delta_coef ** 2)
             self.v_intercept = self.beta2 * self.v_intercept + (1 - self.beta2) * (delta_intercept ** 2)
         elif self.optimizer == "yogi":
-            # Mise à jour Yogi
             self.v = self.v - (1 - self.beta2) * np.sign(self.v - (delta_coef ** 2)) * (delta_coef ** 2)
             self.v_intercept = self.v_intercept - (1 - self.beta2) * np.sign(self.v_intercept - (delta_intercept ** 2)) * (delta_intercept ** 2)
         elif self.optimizer == "adagrad":
-            # Mise à jour Adagrad
             self.v += delta_coef ** 2
             self.v_intercept += delta_intercept ** 2
         
-        # Appliquer la mise à jour avec le taux d'apprentissage du serveur
+        # Appliquer la mise à jour avec le taux d'apprentissage du serveur tau
         self.global_model.coef_ = self.global_model.coef_ + self.server_lr * self.m / (np.sqrt(self.v) + self.tau)
         self.global_model.intercept_ = self.global_model.intercept_ + self.server_lr * self.m_intercept / (np.sqrt(self.v_intercept) + self.tau)
         
         # Contrôler l'intercept si nécessaire
-        #if self.clip_intercept:
-         #   self.global_model.intercept_ = np.clip(self.global_model.intercept_, -5, 5)
+        if self.clip_intercept:
+            self.global_model.intercept_ = np.clip(self.global_model.intercept_, -5, 5)
         
         return self.global_model

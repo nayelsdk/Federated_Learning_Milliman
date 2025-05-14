@@ -13,7 +13,7 @@ def load_datasets(data_paths):
 def prepare_client_data(
     df, 
     n_rounds, 
-    features=["Power", "DriverAge", "Density", "Homme", "Diesel"], 
+    features=["Power", "DriverAge", "Density", "Sex", "Fuel_type"], 
     target="Sinistre", 
     test_size=0.4
 ):
@@ -34,9 +34,8 @@ def prepare_client_data(
         X, y, exposure, test_size=test_size, stratify=y, random_state=42
     )
 
-    # Pas de standardisation car les données sont déjà normalisées
 
-    # Création de mini-batches stratifiés
+    #  mini-batches stratifiés
     indices_class0 = np.where(y_train == 0)[0]
     indices_class1 = np.where(y_train == 1)[0]
 
