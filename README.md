@@ -39,12 +39,7 @@ FEDERATED_LEARNING_MILLIMAN/
 │   ├── provinces_italie.csv
 │   └── wiki_scraping.csv
 ├── Stat_desc.ipynb                 # Script Jupyter qui réalise l'ensemble des statistiques descriptives de nos données
-├── data/                           # Données nettoyées par clean_data_final
-│   ├── belgium_data.csv
-│   ├── french_data.csv
-│   ├── european_data.csv
 ├── data_augmentation.ipynb         # Script Jupyter qui applique  SMOTENC (data-augmentation) aux données dans le dossier data
-├── data_augmentation/...           # Données issues de data_augmentation.ipynb (comporte le même contenu que le dossier data)
 ├── fl_insurance/
 │   └── code/                       # Code source du projet
 │       ├── clients.py              # Modélisation côté client
@@ -56,6 +51,16 @@ FEDERATED_LEARNING_MILLIMAN/
 ├── rapport.pdf                     # Rapport final du projet avec tous les résultats (work in progress ... 🚧)
 ├── slides.pdf                      # Support visuel de la soutenance du 05/06/2025 (work in progress ... 🚧)
 ├── note_de_synthèse.pdf            # Note de synthèse du projet (work in progress ... 🚧)
+```
+
+Il est nécessaire de lancer les fichiers notebook de clean_data_final afin de faire apparaitre le dossier `data` puis le notebook `data_augmentation.ipynb`pour créer le dossier ``data_augmentation`
+
+```
+├── data/                           # Données nettoyées par clean_data_final
+│   ├── belgium_data.csv
+│   ├── french_data.csv
+│   ├── european_data.csv
+├── data_augmentation/...           # Données issues de data_augmentation.ipynb (comporte le même contenu que le dossier data)
 ```
 
 ## 👑 Remerciements
