@@ -1,6 +1,6 @@
 *.csv
 **/*results*/
-data/
-data_augmentation/
+#data/
+#data_augmentation/
 .vscode/
 .DS_Store
