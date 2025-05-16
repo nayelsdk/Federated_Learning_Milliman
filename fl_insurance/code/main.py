@@ -14,9 +14,9 @@ def run_algorithm(algorithm, n_rounds, local_epochs, results_dir, **kwargs):
     
     # Charger les données
     data_paths = {
-        "France": "./data_augmentation/french_data.csv",
-        "Belgique": "./data_augmentation/belgium_data.csv",
-        "Europe": "./data_augmentation/european_data.csv"
+        "France": "/home/onyxia/work/Federated_Learning_Milliman/data/french_data.csv",
+        "Belgique": "/home/onyxia/work/Federated_Learning_Milliman/data/belgium_data.csv",
+        "Europe": "/home/onyxia/work/Federated_Learning_Milliman/data/european_data.csv"
     }
     datasets = load_datasets(data_paths)
     
