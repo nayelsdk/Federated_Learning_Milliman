@@ -38,8 +38,9 @@ FEDERATED_LEARNING_MILLIMAN/
 │   ├── code-postaux-belge.csv
 │   ├── provinces_italie.csv
 │   └── wiki_scraping.csv
-├── Stat_desc.ipynb                 # Script Jupyter qui réalise l'ensemble des statistiques descriptives de nos données
-├── data_augmentation.ipynb         # Script Jupyter qui applique  SMOTENC (data-augmentation) aux données dans le dossier data
+├── Stat_desc                       # Scripts Jupyter qui réalise l'ensemble des statistiques descriptives de nos données
+│   ├── Stat_desc.ipynb
+│   └── test_Stat_desc_image.ipynb
 ├── fl_insurance/
 │   └── code/                       # Code source du projet
 │       ├── clients.py              # Modélisation côté client
