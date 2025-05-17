@@ -49,9 +49,9 @@ FEDERATED_LEARNING_MILLIMAN/
 │       ├── main.py                 # Script principal d'entraînement
 │       ├── servers.py              # Comportement du serveur fédéré selon FedAvg et FedOpt
 ├── requirements.txt                # Ensemble des installations nécessaires pour que le projet tourne
-├── rapport.pdf                     # Rapport final du projet avec tous les résultats (work in progress ... 🚧)
+├── rapport.pdf                     # Rapport final du projet avec tous les résultats
 ├── slides.pdf                      # Support visuel de la soutenance du 05/06/2025 (work in progress ... 🚧)
-├── note_de_synthèse.pdf            # Note de synthèse du projet (work in progress ... 🚧)
+├── note_de_synthèse.pdf            # Note de synthèse du projet
 ```
 
 Il est nécessaire de lancer les fichiers notebook de clean_data_final afin de faire apparaitre le dossier `data` puis le notebook `data_augmentation.ipynb`pour créer le dossier `data_augmentation`.
