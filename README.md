@@ -50,7 +50,7 @@ FEDERATED_LEARNING_MILLIMAN/
 │       ├── servers.py              # Comportement du serveur fédéré selon FedAvg et FedOpt
 ├── requirements.txt                # Ensemble des installations nécessaires pour que le projet tourne
 ├── rapport.pdf                     # Rapport final du projet avec tous les résultats
-├── slides.pdf                      # Support visuel de la soutenance du 05/06/2025 (work in progress ... 🚧)
+├── slides.pdf                      # Support visuel de la soutenance du 05/06/2025
 ├── note_de_synthèse.pdf            # Note de synthèse du projet
 ```
 
